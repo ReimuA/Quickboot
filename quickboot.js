@@ -85,4 +85,6 @@ KillContainer(ids)
 const servicesPath = listServicesPath(path)
 const cli = buildVsCodeCommandLine(projectName, servicesPath)
 
+console.log(chalk.blue("Commands are meant to be executed on host machine"));
+
 console.log(cli.map(x => chalk.green(x)).join("\n"));
