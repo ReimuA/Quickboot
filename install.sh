@@ -1,3 +1,5 @@
+npm ci
+
 sudo ln -sf $PWD/autocomplete.sh /etc/bash_completion.d/qb
 ln -sf $PWD/quickboot.js $HOME/bin/bootProject
 
