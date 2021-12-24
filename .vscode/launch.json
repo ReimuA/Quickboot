@@ -13,7 +13,7 @@
             ],
             "program": "${workspaceFolder}/quickboot.js",
             "args": [
-                "Liveboat"
+                "Housebase"
             ]
         }
     ]

@@ -4,6 +4,9 @@ let { exec, spawn, execSync } = require("child_process");
 let { existsSync, readFileSync } = require('fs');
 let YAML = require('yaml')
 const chalk = require("chalk");
+const glob = require("glob");
+
+const { dirname } = require("path");
 
 function listServicesPath(dockerComposeFilePath) {
     const content = readFileSync(`${dockerComposeFilePath}/docker-compose.yml`, 'utf8')
@@ -21,13 +24,6 @@ function listServicesPath(dockerComposeFilePath) {
 function buildVsCodeCommandLine(projectName, services) {
     return services.map(s => `code --remote ssh-remote+dev ${process.env.WORKSPACE_DIR}/${projectName}/${s}`);
 }
-
-function buildVsCodeCli(services) {
-    return services.map(s => {
-
-    })
-}
-
 
 // Execute synchronously and log the output
 function ExecAndLog(command) {
@@ -50,6 +46,21 @@ function ExecAndLog(command) {
     });
 }
 
+function findDockerPath(projectName) {
+    return new Promise((resolve, reject) => {
+        glob(
+            `${process.env.WORKSPACE_DIR}/${projectName}/docker/**/docker-compose.yml`,
+            { nocase: true },
+            (err, files) => {
+                if (files.length > 0 && !err) {
+                    resolve(dirname(files[0]));
+                }
+                reject(new Error("Cannot find docker-compose.yml"));
+            }
+        )
+    })
+}
+
 function KillContainer(ids) {
     return ids.length > 0 ? ExecAndLog(`docker kill ${ids.join(' ')}`) : Promise.resolve();
 }
@@ -59,32 +70,24 @@ if (process.argv.length < 3) {
     return 1;
 }
 
-let projectName = process.argv[2];
+(async () => {
 
-let paths = [
-    `${process.env.WORKSPACE_DIR}/${projectName}/docker/${projectName}`,
-    `${process.env.WORKSPACE_DIR}/${projectName}/Docker/${projectName}`
-];
+    let projectName = process.argv[2];
 
-let path = paths.find(x => existsSync(x));
+    const path = await findDockerPath(projectName)
 
-if (path == undefined) {
-    console.log("Project / Docker configuration not found");
-    console.log("Path looked:");
-    console.log(paths);
-    return 1;
-}
+    process.chdir(path);
 
-process.chdir(path);
+    let ids = execSync("docker ps -q").toString().split("\n").filter(x => x.length > 0);
 
-let ids = execSync("docker ps -q").toString().split("\n").filter(x => x.length > 0);
+    KillContainer(ids)
+        .then(_ => ExecAndLog("docker-compose up -d"));
 
-KillContainer(ids)
-    .then(_ => ExecAndLog("docker-compose up -d"));
+    const servicesPath = listServicesPath(path)
+    const cli = buildVsCodeCommandLine(projectName, servicesPath)
 
-const servicesPath = listServicesPath(path)
-const cli = buildVsCodeCommandLine(projectName, servicesPath)
+    console.log(chalk.blue("Commands are meant to be executed on host machine"));
 
-console.log(chalk.blue("Commands are meant to be executed on host machine"));
+    console.log(cli.map(x => chalk.green(x)).join("\n"));
 
-console.log(cli.map(x => chalk.green(x)).join("\n"));
+})();
