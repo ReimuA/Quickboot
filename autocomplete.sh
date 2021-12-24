@@ -8,7 +8,7 @@ _qb()
 
     filelist=""
 
-    for file in /home/dev/Workspace/* # Modify with your project directory
+    for file in $WORKSPACE_DIR/* # Modify with your project directory
     do
         filename=${file##*/}
         filelist="${filelist} ${filename}"

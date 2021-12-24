@@ -1,4 +1,4 @@
-#!/home/dev/node-v14.17.6-linux-x64/bin/node
+#!node
 
 let { exec, spawn, execSync } = require("child_process");
 let { existsSync } = require('fs');
@@ -36,8 +36,8 @@ if (process.argv.length < 3) {
 let projectName = process.argv[2];
 
 let paths = [
-    `/home/dev/Workspace/${projectName}/docker/${projectName}`,
-    `/home/dev/Workspace/${projectName}/Docker/${projectName}`
+    `${process.env.WORKSPACE_DIR}/${projectName}/docker/${projectName}`,
+    `${process.env.WORKSPACE_DIR}/${projectName}/Docker/${projectName}`
 ];
 
 let path = paths.find(x => existsSync(x));
